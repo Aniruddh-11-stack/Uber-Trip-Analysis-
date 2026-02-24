@@ -9,6 +9,27 @@ import json
 import os
 from datetime import datetime
 
+# Lazy import for Gemini (only when key provided)
+def get_gemini_response(api_key: str, question: str, context: str) -> str:
+    try:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-1.5-flash",
+            google_api_key=api_key,
+            temperature=0.4,
+        )
+        prompt = (
+            f"You are an expert Uber data analyst for New York City.\n"
+            f"Here are key statistics from the NYC Uber trip dataset:\n{context}\n\n"
+            f"Answer this question concisely (2-4 sentences, data-driven):\n{question}"
+        )
+        response = llm.invoke(prompt)
+        return response.content
+    except ImportError:
+        return "Install langchain-google-genai: pip install langchain-google-genai"
+    except Exception as e:
+        return f"Gemini error: {str(e)}"
+
 # ─────────────────────────────────────────────
 # PAGE CONFIG
 # ─────────────────────────────────────────────
@@ -285,6 +306,31 @@ with st.sidebar:
             {border} {bg} color: {color};
         }}
         </style>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # ── Gemini API Key Input ────────────────────────────
+    st.markdown("""
+    <div style='font-size:0.7rem; font-weight:600; letter-spacing:1.5px;
+                color:#555; text-transform:uppercase; margin-bottom:6px;'>🔑 Gemini API Key</div>
+    """, unsafe_allow_html=True)
+
+    gemini_key = st.text_input(
+        "",
+        type="password",
+        placeholder="Paste your Gemini key...",
+        key="gemini_api_key",
+        label_visibility="collapsed",
+        help="Get your key at console.cloud.google.com — enables the AI Analyst"
+    )
+    if gemini_key:
+        st.markdown("""
+        <div style='font-size:0.72rem; color:#09DE6F; margin-top:4px;'>✓ AI Analyst powered by Gemini</div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style='font-size:0.72rem; color:#444; margin-top:4px;'>AI Analyst uses rule-based mode</div>
         """, unsafe_allow_html=True)
 
     st.markdown("---")
@@ -595,7 +641,34 @@ elif st.session_state.page == "EDA Dashboard":
 # ─────────────────────────────────────────────
 elif st.session_state.page == "AI Analyst":
     st.markdown("<h2 style='color:#FFFFFF; font-weight:700; margin-bottom:0.3rem;'>🤖 AI Trip Analyst</h2>", unsafe_allow_html=True)
+
+    gemini_key = st.session_state.get("gemini_api_key", "")
+    if gemini_key:
+        st.markdown("""
+        <div style='display:inline-flex; align-items:center; gap:8px; background:#021A0F;
+                    border:1px solid #09DE6F44; border-radius:8px; padding:6px 14px; margin-bottom:1rem;'>
+            <span style='color:#09DE6F; font-size:0.85rem;'>✦ Powered by Gemini 1.5 Flash</span>
+        </div>""", unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style='display:inline-flex; align-items:center; gap:8px; background:#1A1A1A;
+                    border:1px solid #2A2A2A; border-radius:8px; padding:6px 14px; margin-bottom:1rem;'>
+            <span style='color:#666; font-size:0.85rem;'>Rule-based mode — paste Gemini key in sidebar to activate AI</span>
+        </div>""", unsafe_allow_html=True)
+
     st.markdown("<p style='color:#555; font-size:0.85rem; margin-bottom:1.5rem;'>Ask any question about NYC Uber trip data in plain English.</p>", unsafe_allow_html=True)
+
+    # Build context string for Gemini
+    gemini_context = (
+        f"Total trips: {total_trips:,}\n"
+        f"Peak hour: {peak_hour_label}\n"
+        f"Top neighborhood: {top_zone}\n"
+        f"Busiest dispatch base: {busiest_base}\n"
+        f"Top weekday: {df['Weekday'].value_counts().idxmax()}\n"
+        f"Rush hour share: {df['Rush_Hour'].mean():.1%}\n"
+        f"Top 5 zones: {', '.join(zone_counts['Neighborhood'].head(5).tolist())}\n"
+        f"Date range: April–June 2014, NYC\n"
+    )
 
     # Suggested questions
     st.markdown("<div style='font-size:0.75rem; color:#444; margin-bottom:8px; letter-spacing:1px;'>SUGGESTED QUESTIONS</div>", unsafe_allow_html=True)
@@ -643,29 +716,43 @@ elif st.session_state.page == "AI Analyst":
                                 font-weight:600; line-height:1.6;'>{msg["text"]}</div>
                 </div>""", unsafe_allow_html=True)
 
-    # Process pending query from suggestion buttons
+    # Process pending query
     if "pending_ai_query" in st.session_state:
-        q = st.session_state.pending_ai_query.lower()
+        original_q = st.session_state.pending_ai_query
+        q = original_q.lower()
         del st.session_state.pending_ai_query
-        if "zone" in q or "area" in q or "neighborhood" in q:
-            ans = f"🏙️ <b>{top_zone}</b> is the #1 pickup zone in NYC with the highest trip concentration. The top 5 zones are:<br>1. {zone_counts.iloc[0]['Neighborhood']} ({zone_counts.iloc[0]['Trips']:,} trips)<br>2. {zone_counts.iloc[1]['Neighborhood']}<br>3. {zone_counts.iloc[2]['Neighborhood']}<br>4. {zone_counts.iloc[3]['Neighborhood']}<br>5. {zone_counts.iloc[4]['Neighborhood']}"
-        elif "peak" in q or "hour" in q:
-            top3_hours = ", ".join(
-                [f"{h % 12 or 12}{'PM' if h >= 12 else 'AM'}"
-                 for h in trips_by_hour.nlargest(3, "Trips")["Hour"].tolist()]
-            )
-            ans = f"⏰ The peak Uber pickup hour in NYC is <b>{peak_hour_label}</b>, during the evening rush. The top 3 busiest hours are {top3_hours}."
-        elif "base" in q:
-            ans = f"🏢 <b>{busiest_base}</b> is the busiest dispatch base, handling {trips_by_base.iloc[0]['Trips']:,} trips. Top bases: {', '.join(trips_by_base['Base'].head(3).tolist())}."
-        elif "total" in q or "how many" in q:
-            ans = f"📊 The dataset contains <b>{total_trips:,} total trips</b> across New York City, captured between April–June 2014."
+
+        gemini_key = st.session_state.get("gemini_api_key", "")
+
+        if gemini_key:
+            with st.spinner("Gemini is thinking..."):
+                ans = get_gemini_response(gemini_key, original_q, gemini_context)
         else:
-            ans = f"Based on the Uber NYC data: <b>{total_trips:,}</b> total trips, peak hour at <b>{peak_hour_label}</b>, top zone: <b>{top_zone}</b>, busiest base: <b>{busiest_base}</b>."
+            # Rule-based fallback
+            if "zone" in q or "area" in q or "neighborhood" in q:
+                ans = (f"🏙️ <b>{top_zone}</b> is the #1 pickup zone in NYC. "
+                       f"Top 5: {', '.join(zone_counts['Neighborhood'].head(5).tolist())}")
+            elif "peak" in q or "hour" in q:
+                top3_hours = ", ".join(
+                    [f"{h % 12 or 12}{'PM' if h >= 12 else 'AM'}"
+                     for h in trips_by_hour.nlargest(3, "Trips")["Hour"].tolist()]
+                )
+                ans = f"The peak Uber hour in NYC is <b>{peak_hour_label}</b>. Top 3 hours: {top3_hours}."
+            elif "base" in q:
+                ans = f"<b>{busiest_base}</b> is the busiest dispatch base with {trips_by_base.iloc[0]['Trips']:,} trips."
+            elif "total" in q or "how many" in q:
+                ans = f"The dataset contains <b>{total_trips:,} total trips</b> (Apr–Jun 2014, NYC)."
+            else:
+                ans = (f"Data summary: <b>{total_trips:,}</b> trips | Peak: <b>{peak_hour_label}</b> | "
+                       f"Top zone: <b>{top_zone}</b> | Top base: <b>{busiest_base}</b>. "
+                       f"Paste a Gemini key in the sidebar for full AI responses!")
+
         st.session_state.ai_messages.append({"role": "ai", "text": ans})
         st.rerun()
 
     # Input
-    ai_input = st.text_input("", placeholder="Ask me anything about NYC Uber trips...", key="ai_chat_input", label_visibility="collapsed")
+    placeholder_txt = "Ask me anything... (Gemini active)" if st.session_state.get("gemini_api_key") else "Ask me anything... (rule-based mode)"
+    ai_input = st.text_input("", placeholder=placeholder_txt, key="ai_chat_input", label_visibility="collapsed")
     send_col, clear_col = st.columns([4, 1])
     with send_col:
         if st.button("Send ➤", key="send_ai", use_container_width=True):
