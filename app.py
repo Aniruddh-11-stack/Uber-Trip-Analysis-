@@ -153,12 +153,13 @@ def load_data():
     # ── Synthetic fallback (realistic NYC distribution) ──
     np.random.seed(42)
     n = 20000
-    hours = np.random.choice(range(24), n, p=[
+    _hp = np.array([
         0.01,0.008,0.006,0.005,0.005,0.008,
         0.02,0.04,0.06,0.05,0.04,0.045,
         0.05,0.05,0.045,0.05,0.055,0.07,
         0.065,0.055,0.05,0.04,0.03,0.02
     ])
+    hours = np.random.choice(range(24), n, p=_hp/_hp.sum())
     weekdays = np.random.choice(
         ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
         n, p=[0.13,0.13,0.14,0.14,0.16,0.16,0.10]
