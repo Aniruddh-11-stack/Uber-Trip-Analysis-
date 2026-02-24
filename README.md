@@ -6,7 +6,22 @@
 
 ## 🖥️ Dashboard Preview
 
-> Black background · Uber green accents · Interactive NYC heatmap · AI chat interface
+![Uber Dashboard Preview](uber_dashboard_preview.png)
+
+> Black background · Uber green accents · Interactive NYC heatmap · AI analyst chat
+
+---
+
+## 🤖 Example AI Prompts
+
+Try asking the AI Analyst:
+- "Which area of New York City gets the most number of Uber trips?"
+- "What is the peak hour for Uber pickups in NYC?"
+- "Compare the volume of Midtown Manhattan vs. Financial District."
+- "What are the top 5 busiest neighborhoods?"
+- "How does trip demand change during rush hour?"
+
+---
 
 Run `streamlit run app.py` to launch the live dashboard.
 
