@@ -160,13 +160,15 @@ def load_data():
         0.065,0.055,0.05,0.04,0.03,0.02
     ])
     hours = np.random.choice(range(24), n, p=_hp/_hp.sum())
+    _wp = np.array([0.13, 0.13, 0.14, 0.14, 0.16, 0.16, 0.10])
     weekdays = np.random.choice(
         ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-        n, p=[0.13,0.13,0.14,0.14,0.16,0.16,0.10]
+        n, p=_wp/_wp.sum()
     )
+    _bp = np.array([0.35, 0.25, 0.20, 0.12, 0.08])
     bases = np.random.choice(
         ["B02617","B02598","B02682","B02764","B02765"],
-        n, p=[0.35,0.25,0.20,0.12,0.08]
+        n, p=_bp/_bp.sum()
     )
     # NYC pickup hotspots (lat, lon, weight)
     zones = [
