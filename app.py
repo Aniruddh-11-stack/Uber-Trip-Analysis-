@@ -3,11 +3,18 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.io as pio
 import folium
 from streamlit_folium import st_folium
 import json
 import os
 from datetime import datetime
+
+# Force plotly to use stdlib json (avoids orjson circular-import bug)
+try:
+    pio.json.config.default_engine = "json"
+except Exception:
+    pass
 
 # Lazy import for Gemini (only when key provided)
 def get_gemini_response(api_key: str, question: str, context: str) -> str:
@@ -393,7 +400,7 @@ if st.session_state.page == "Home":
     with c4:
         st.markdown(kpi_card("BUSIEST BASE", busiest_base, "Top dispatch center", "🏢"), unsafe_allow_html=True)
 
-    st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
     # Map + Top Zones
     map_col, chart_col = st.columns([3, 2], gap="medium")
@@ -433,36 +440,51 @@ if st.session_state.page == "Home":
                 )
             ).add_to(m)
 
-        st_folium(m, height=380, use_container_width=True)
+        st_folium(m, height=400, use_container_width=True)
 
     with chart_col:
-        st.markdown("<div style='font-size:0.8rem; font-weight:600; color:#555; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:8px;'>TOP NYC NEIGHBORHOODS</div>", unsafe_allow_html=True)
-        top10 = zone_counts.head(10).sort_values("Trips")
-        fig_zones = go.Figure(go.Bar(
-            x=top10["Trips"],
-            y=top10["Neighborhood"],
-            orientation="h",
-            marker=dict(
-                color=top10["Trips"],
-                colorscale=[[0, "#043520"], [0.5, "#06A052"], [1.0, "#09DE6F"]],
-                showscale=False,
-            ),
-            text=top10["Trips"].apply(lambda x: f"{x/1000:.1f}K" if x >= 1000 else str(x)),
-            textposition="outside",
-            textfont=dict(color="#FFFFFF", size=10),
-        ))
-        fig_zones.update_layout(**uber_layout("", height=380))
-        fig_zones.update_xaxes(showgrid=False, showticklabels=False)
-        fig_zones.update_yaxes(tickfont=dict(color="#CCCCCC", size=11))
-        st.plotly_chart(fig_zones, use_container_width=True)
+        st.markdown("""
+        <div style='font-size:0.75rem; font-weight:700; color:#777; letter-spacing:2px;
+                    text-transform:uppercase; margin-bottom:12px; padding-bottom:8px;
+                    border-bottom:1px solid #1A1A1A;'>TOP 10 NYC NEIGHBORHOODS</div>
+        """, unsafe_allow_html=True)
+
+        top10 = zone_counts.head(10)
+        max_v = top10["Trips"].max()
+        rows_html = ""
+        for _, row in top10.iterrows():
+            pct = row["Trips"] / max_v * 100
+            trip_k = f"{row['Trips']/1000:.1f}K" if row["Trips"] >= 1000 else str(row["Trips"])
+            alpha = 0.40 + 0.60 * (pct / 100)
+            bar_color = f"rgba(9,222,111,{alpha:.2f})"
+            rows_html += f"""
+            <div style='margin-bottom:10px;'>
+                <div style='display:flex; justify-content:space-between; margin-bottom:4px;'>
+                    <span style='color:#CCCCCC; font-size:0.78rem; font-weight:500;'>{row['Neighborhood']}</span>
+                    <span style='color:#09DE6F; font-size:0.75rem; font-weight:600;'>{trip_k}</span>
+                </div>
+                <div style='background:#111; border-radius:4px; height:6px; overflow:hidden;'>
+                    <div style='width:{pct:.1f}%; height:100%; background:{bar_color};
+                                border-radius:4px; transition:width 0.6s ease;
+                                box-shadow:0 0 6px rgba(9,222,111,0.5);'></div>
+                </div>
+            </div>"""
+
+        st.markdown(f"""
+        <div style='background:#070707; border:1px solid #1A1A1A; border-radius:12px;
+                    padding:1rem 1.2rem; height:400px; overflow-y:auto;'>
+            {rows_html}
+        </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
 
-    # AI Chat at bottom of Home
+    # ── Live Support Chat (bottom of Home, matches mockup) ─────────────────
     st.markdown("""
-    <div style='background:#0A0A0A; border:1px solid #1A1A1A; border-radius:12px; padding:1rem; margin-top:0.5rem;'>
-        <div style='font-size:0.8rem; font-weight:600; color:#555; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px;'>
-            🤖 LIVE SUPPORT CHAT
+    <div style='background:#050505; border:1px solid #09DE6F22; border-radius:12px;
+                padding:1rem 1.3rem; margin-top:0.8rem;'>
+        <div style='font-size:0.72rem; font-weight:700; color:#555;
+                    letter-spacing:2px; text-transform:uppercase; margin-bottom:10px;'>
+            💬 LIVE SUPPORT CHAT
         </div>
     """, unsafe_allow_html=True)
 
@@ -471,41 +493,52 @@ if st.session_state.page == "Home":
             {"role": "ai", "text": "Hi! I'm your Uber Trip Analyst. Ask me anything about NYC trip data 🚗"}
         ]
 
-    for msg in st.session_state.home_messages[-3:]:
+    for msg in st.session_state.home_messages[-4:]:
         if msg["role"] == "ai":
             st.markdown(f"""
-            <div style='display:flex; gap:8px; align-items:flex-end; margin-bottom:8px;'>
-                <div style='width:28px; height:28px; background:#09DE6F; border-radius:50%;
-                            display:flex; align-items:center; justify-content:center; font-size:0.8rem; flex-shrink:0;'>🤖</div>
-                <div style='background:#1A1A1A; color:#FFFFFF; padding:10px 14px; border-radius:12px 12px 12px 4px;
-                            font-size:0.82rem; max-width:80%; line-height:1.5;'>{msg["text"]}</div>
+            <div style='display:flex; gap:8px; align-items:flex-start; margin-bottom:8px;'>
+                <div style='width:26px; height:26px; background:#09DE6F11; border:1px solid #09DE6F44;
+                            border-radius:50%; display:flex; align-items:center; justify-content:center;
+                            font-size:0.75rem; flex-shrink:0; margin-top:2px;'>🤖</div>
+                <div style='background:#111; border:1px solid #1A1A1A; color:#CCCCCC; padding:9px 13px;
+                            border-radius:4px 12px 12px 12px; font-size:0.8rem; max-width:85%;line-height:1.5;'>{msg["text"]}</div>
             </div>""", unsafe_allow_html=True)
         else:
             st.markdown(f"""
-            <div style='display:flex; gap:8px; align-items:flex-end; justify-content:flex-end; margin-bottom:8px;'>
-                <div style='background:#09DE6F; color:#000000; padding:10px 14px; border-radius:12px 12px 4px 12px;
-                            font-size:0.82rem; max-width:80%; font-weight:500; line-height:1.5;'>{msg["text"]}</div>
+            <div style='display:flex; gap:8px; align-items:flex-start; justify-content:flex-end; margin-bottom:8px;'>
+                <div style='background:#09DE6F; color:#000000; padding:9px 13px;
+                            border-radius:12px 4px 12px 12px; font-size:0.8rem;
+                            max-width:85%; font-weight:500; line-height:1.5;'>{msg["text"]}</div>
             </div>""", unsafe_allow_html=True)
 
-    user_input = st.text_input("", placeholder="Type your question or command...", key="home_chat_input", label_visibility="collapsed")
+    # Input row
+    h_in_col, h_send_col = st.columns([8, 1])
+    with h_in_col:
+        home_input = st.text_input("", placeholder="Type your question or command...",
+                                   key="home_chat_input", label_visibility="collapsed")
+    with h_send_col:
+        home_send = st.button("➤", key="home_send", use_container_width=True)
 
-    if user_input:
-        st.session_state.home_messages.append({"role": "user", "text": user_input})
-        q = user_input.lower()
-        # Simple rule-based responses (replace with LangChain agent for full version)
-        if "peak" in q or "hour" in q or "busy" in q:
-            answer = f"The peak hour for Uber pickups in NYC is **{peak_hour_label}**, with the highest demand concentrated during evening rush."
-        elif "zone" in q or "area" in q or "neighborhood" in q or "where" in q:
-            answer = f"**{top_zone}** is the #1 pickup zone in NYC. The top 5 zones are: {', '.join(zone_counts['Neighborhood'].head(5).tolist())}."
-        elif "base" in q:
-            answer = f"The busiest dispatch base is **{busiest_base}**, handling the highest volume of trip dispatches."
-        elif "total" in q or "how many" in q:
-            answer = f"The dataset contains **{total_trips:,} total trips** across NYC, collected over the April–June 2014 period."
-        elif "friday" in q or "weekend" in q or "weekday" in q:
-            top_day = df["Weekday"].value_counts().idxmax()
-            answer = f"**{top_day}** is the busiest day for Uber rides in NYC based on this dataset."
+    if home_send and home_input.strip():
+        st.session_state.home_messages.append({"role": "user", "text": home_input})
+        gemini_key = st.session_state.get("gemini_api_key", "")
+        if gemini_key:
+            ctx = (f"Total trips:{total_trips:,}\nPeak hour:{peak_hour_label}\n"
+                   f"Top zone:{top_zone}\nBusiest base:{busiest_base}\n"
+                   f"Top 5 zones:{', '.join(zone_counts['Neighborhood'].head(5).tolist())}")
+            answer = get_gemini_response(gemini_key, home_input, ctx)
         else:
-            answer = f"Great question! Based on the data: {total_trips:,} trips were recorded, with peak demand at {peak_hour_label} and the hottest zone being {top_zone}. Try asking about peak hours, zones, or bases!"
+            q = home_input.lower()
+            if "peak" in q or "hour" in q or "busy" in q:
+                answer = f"The peak hour is **{peak_hour_label}**, with the highest demand during the evening rush."
+            elif "zone" in q or "area" in q or "neighborhood" in q or "where" in q:
+                answer = f"**{top_zone}** is the #1 pickup zone. Top 5: {', '.join(zone_counts['Neighborhood'].head(5).tolist())}."
+            elif "base" in q:
+                answer = f"Busiest base: **{busiest_base}**."
+            elif "total" in q or "how many" in q:
+                answer = f"**{total_trips:,} total trips** across NYC (Apr–Jun 2014)."
+            else:
+                answer = f"Data summary: **{total_trips:,}** trips | Peak: **{peak_hour_label}** | Top zone: **{top_zone}**. Paste a Gemini key in the sidebar for AI-powered answers!"
         st.session_state.home_messages.append({"role": "ai", "text": answer})
         st.rerun()
 
