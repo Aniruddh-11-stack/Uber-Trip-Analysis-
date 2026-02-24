@@ -1,22 +1,29 @@
-{
- "nbformat": 4,
- "nbformat_minor": 5,
- "metadata": {
-  "kernelspec": {
-   "display_name": "Python 3",
-   "language": "python",
-   "name": "python3"
-  },
-  "language_info": {
-   "name": "python",
-   "version": "3.10.0"
-  }
- },
- "cells": [
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+"""
+Generate Uber_Trip_Analysis.ipynb with all 10 sections.
+Run: python generate_notebook.py
+"""
+import json
+
+def md(source):
+    return {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": source if isinstance(source, list) else [source]
+    }
+
+def code(source, outputs=None):
+    return {
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {},
+        "outputs": outputs or [],
+        "source": source if isinstance(source, list) else [source]
+    }
+
+cells = []
+
+# ── HEADER ──────────────────────────────────────────────────────────────────
+cells.append(md([
     "# 🚗 Uber Trip Analysis — New York City\n",
     "\n",
     "> **End-to-end data science project** analysing Uber pickup patterns across NYC using EDA, geospatial analysis, machine learning, deep learning, LangChain AI agents, and Generative AI.\n",
@@ -32,22 +39,13 @@
     "| 7 | LSTM Demand Forecasting |\n",
     "| 8 | 🤖 LangChain ReAct Agent |\n",
     "| 9 | 🧠 GenAI Insight Summarizer |\n",
-    "| 10 | Streamlit Dashboard |\n"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "# Section 1 — Imports & Setup"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "| 10 | Streamlit Dashboard |\n",
+]))
+
+# ── SECTION 1: IMPORTS ──────────────────────────────────────────────────────
+cells.append(md("# Section 1 — Imports & Setup"))
+
+cells.append(code([
     "# Core data science stack\n",
     "import numpy as np\n",
     "import pandas as pd\n",
@@ -82,26 +80,19 @@
     "# import os\n",
     "# load_dotenv()\n",
     "\n",
-    "print('✅ All imports successful')"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+    "print('✅ All imports successful')",
+]))
+
+# ── SECTION 2: DATA LOADING ─────────────────────────────────────────────────
+cells.append(md([
     "# Section 2 — Data Loading & Feature Engineering\n",
     "\n",
     "**Dataset**: Uber Pickups in New York City (FiveThirtyEight)  \n",
     "**Columns**: `Date/Time`, `Lat`, `Lon`, `Base`  \n",
-    "**Download**: https://www.kaggle.com/datasets/fivethirtyeight/uber-pickups-in-new-york-city\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "**Download**: https://www.kaggle.com/datasets/fivethirtyeight/uber-pickups-in-new-york-city\n",
+]))
+
+cells.append(code([
     "# ── Load data (update path to your CSV) ──────────────────────────────────\n",
     "# df = pd.read_csv('uber-raw-data-apr14.csv')\n",
     "\n",
@@ -163,37 +154,25 @@
     "df['Rush_Hour'] = df['Hour'].apply(lambda h: 1 if (7 <= h <= 9 or 17 <= h <= 20) else 0)\n",
     "\n",
     "print(f'Dataset shape: {df.shape}')\n",
-    "df.head()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "df.head()",
+]))
+
+cells.append(code([
     "# ── Basic statistics ─────────────────────────────────────────────────────\n",
     "print('Null values:', df.isnull().sum().sum())\n",
     "print('\\nColumn dtypes:')\n",
     "print(df.dtypes)\n",
-    "df.describe()"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+    "df.describe()",
+]))
+
+# ── SECTION 3: EDA ──────────────────────────────────────────────────────────
+cells.append(md([
     "# Section 3 — Exploratory Data Analysis\n",
     "\n",
-    "We explore trip patterns across **time of day**, **day of week**, **dispatch bases**, and **demand heatmap**."
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "We explore trip patterns across **time of day**, **day of week**, **dispatch bases**, and **demand heatmap**.",
+]))
+
+cells.append(code([
     "fig, axes = plt.subplots(2, 2, figsize=(16, 10))\n",
     "fig.patch.set_facecolor('#0A0A0A')\n",
     "GREEN = '#09DE6F'\n",
@@ -254,40 +233,28 @@
     "plt.tight_layout()\n",
     "plt.savefig('eda_overview.png', dpi=150, bbox_inches='tight', facecolor='#0A0A0A')\n",
     "plt.show()\n",
-    "print('✅ EDA Overview saved as eda_overview.png')"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+    "print('✅ EDA Overview saved as eda_overview.png')",
+]))
+
+# ── SECTION 4: ZONE ANALYSIS ────────────────────────────────────────────────
+cells.append(md([
     "# Section 4 — 🗺️ NYC Neighborhood Zone Analysis\n",
     "\n",
     "**Key Question**: Which area of New York City gets the most Uber trips?\n",
     "\n",
-    "We use lat/lon coordinates to assign each trip to a NYC neighborhood and create an interactive choropleth heatmap.\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "We use lat/lon coordinates to assign each trip to a NYC neighborhood and create an interactive choropleth heatmap.\n",
+]))
+
+cells.append(code([
     "# ── Top neighborhoods ─────────────────────────────────────────────────────\n",
     "zone_trips = df['Neighborhood'].value_counts().reset_index()\n",
     "zone_trips.columns = ['Neighborhood', 'Trips']\n",
     "zone_trips['Share_%'] = (zone_trips['Trips'] / zone_trips['Trips'].sum() * 100).round(2)\n",
     "print('Top 10 NYC Neighborhoods by Uber Pickups:')\n",
-    "print(zone_trips.head(10).to_string(index=False))"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "print(zone_trips.head(10).to_string(index=False))",
+]))
+
+cells.append(code([
     "# ── Horizontal bar chart ──────────────────────────────────────────────────\n",
     "fig, ax = plt.subplots(figsize=(10, 7))\n",
     "fig.patch.set_facecolor('#0A0A0A')\n",
@@ -310,15 +277,10 @@
     "\n",
     "plt.tight_layout()\n",
     "plt.savefig('top_neighborhoods.png', dpi=150, bbox_inches='tight', facecolor='#0A0A0A')\n",
-    "plt.show()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "plt.show()",
+]))
+
+cells.append(code([
     "# ── Interactive Folium heatmap ─────────────────────────────────────────────\n",
     "zone_centers = df.groupby('Neighborhood').agg(\n",
     "    trips=('Lat', 'count'),\n",
@@ -347,27 +309,20 @@
     "\n",
     "m.save('nyc_uber_heatmap.html')\n",
     "print('✅ Interactive map saved: nyc_uber_heatmap.html  (open in browser)')\n",
-    "m"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+    "m",
+]))
+
+# ── SECTION 5: RUSH HOUR CLASSIFIER ─────────────────────────────────────────
+cells.append(md([
     "# Section 5 — Rush Hour Classification (Random Forest)\n",
     "\n",
     "We engineer a **Rush Hour** binary label and train a Random Forest classifier to predict whether a trip falls during peak demand hours.\n",
     "\n",
     "- **Rush Hour = 1**: 7–9 AM or 5–8 PM  \n",
-    "- **Rush Hour = 0**: All other hours\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "- **Rush Hour = 0**: All other hours\n",
+]))
+
+cells.append(code([
     "# ── Feature engineering ───────────────────────────────────────────────────\n",
     "weekday_map = {'Monday':0,'Tuesday':1,'Wednesday':2,'Thursday':3,\n",
     "               'Friday':4,'Saturday':5,'Sunday':6}\n",
@@ -379,30 +334,20 @@
     "\n",
     "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)\n",
     "print(f'Train: {X_train.shape[0]} samples  |  Test: {X_test.shape[0]} samples')\n",
-    "print(f'Rush Hour rate: {y.mean():.2%}')"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "print(f'Rush Hour rate: {y.mean():.2%}')",
+]))
+
+cells.append(code([
     "# ── Train Random Forest ───────────────────────────────────────────────────\n",
     "rf = RandomForestClassifier(n_estimators=100, max_depth=8, random_state=42, n_jobs=-1)\n",
     "rf.fit(X_train, y_train)\n",
     "y_pred = rf.predict(X_test)\n",
     "\n",
     "print('Classification Report:')\n",
-    "print(classification_report(y_test, y_pred, target_names=['Non-Rush', 'Rush Hour']))"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "print(classification_report(y_test, y_pred, target_names=['Non-Rush', 'Rush Hour']))",
+]))
+
+cells.append(code([
     "# ── Confusion matrix + feature importance ────────────────────────────────\n",
     "fig, axes = plt.subplots(1, 2, figsize=(14, 5))\n",
     "fig.patch.set_facecolor('#0A0A0A')\n",
@@ -429,24 +374,17 @@
     "\n",
     "plt.tight_layout()\n",
     "plt.savefig('rush_hour_model.png', dpi=150, bbox_inches='tight', facecolor='#0A0A0A')\n",
-    "plt.show()"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+    "plt.show()",
+]))
+
+# ── SECTION 6: PCA ──────────────────────────────────────────────────────────
+cells.append(md([
     "# Section 6 — PCA on Trip Features\n",
     "\n",
-    "Principal Component Analysis (PCA) reduces the high-dimensional feature space to 2D for visualization. We apply it to trip features to see if Rush Hour trips form distinguishable clusters.\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "Principal Component Analysis (PCA) reduces the high-dimensional feature space to 2D for visualization. We apply it to trip features to see if Rush Hour trips form distinguishable clusters.\n",
+]))
+
+cells.append(code([
     "# ── Standardize + PCA ────────────────────────────────────────────────────\n",
     "pca_features = ['Hour', 'Day', 'Month', 'Weekday_num', 'Lat', 'Lon']\n",
     "scaler = StandardScaler()\n",
@@ -489,41 +427,29 @@
     "\n",
     "plt.tight_layout()\n",
     "plt.savefig('pca_analysis.png', dpi=150, bbox_inches='tight', facecolor='#0A0A0A')\n",
-    "plt.show()"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+    "plt.show()",
+]))
+
+# ── SECTION 7: LSTM ─────────────────────────────────────────────────────────
+cells.append(md([
     "# Section 7 — LSTM Demand Forecasting\n",
     "\n",
     "We aggregate trips per hour to create a time series, then train an **LSTM (Long Short-Term Memory)** model to predict future hourly demand.\n",
     "\n",
-    "The model learns temporal patterns: morning lulls, evening rush, weekend vs weekday.\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "The model learns temporal patterns: morning lulls, evening rush, weekend vs weekday.\n",
+]))
+
+cells.append(code([
     "# ── Build hourly time series ──────────────────────────────────────────────\n",
     "hourly = df.groupby(['Month', 'Day', 'Hour']).size().reset_index(name='trips')\n",
     "hourly = hourly.sort_values(['Month', 'Day', 'Hour']).reset_index(drop=True)\n",
     "series = hourly['trips'].values.astype(float)\n",
     "\n",
     "print(f'Time series length: {len(series)} hourly observations')\n",
-    "print(f'Min: {series.min():.0f} | Max: {series.max():.0f} | Mean: {series.mean():.1f}')"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "print(f'Min: {series.min():.0f} | Max: {series.max():.0f} | Mean: {series.mean():.1f}')",
+]))
+
+cells.append(code([
     "# ── Create LSTM sequences ─────────────────────────────────────────────────\n",
     "from sklearn.preprocessing import MinMaxScaler\n",
     "\n",
@@ -545,15 +471,10 @@
     "split = int(len(X_ts) * 0.8)\n",
     "X_train_ts, X_test_ts = X_ts[:split], X_ts[split:]\n",
     "y_train_ts, y_test_ts = y_ts[:split], y_ts[split:]\n",
-    "print(f'Train sequences: {len(X_train_ts)} | Test sequences: {len(X_test_ts)}')"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "print(f'Train sequences: {len(X_train_ts)} | Test sequences: {len(X_test_ts)}')",
+]))
+
+cells.append(code([
     "# ── Build & train LSTM model ──────────────────────────────────────────────\n",
     "lstm_model = Sequential([\n",
     "    LSTM(64, input_shape=(LOOKBACK, 1), return_sequences=True),\n",
@@ -574,15 +495,10 @@
     "    validation_split=0.1,\n",
     "    callbacks=[early_stop],\n",
     "    verbose=1\n",
-    ")"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    ")",
+]))
+
+cells.append(code([
     "# ── Evaluate & plot predictions ───────────────────────────────────────────\n",
     "y_pred_scaled = lstm_model.predict(X_test_ts).flatten()\n",
     "y_pred_actual = ts_scaler.inverse_transform(y_pred_scaled.reshape(-1,1)).flatten()\n",
@@ -621,13 +537,11 @@
     "\n",
     "plt.tight_layout()\n",
     "plt.savefig('lstm_forecast.png', dpi=150, bbox_inches='tight', facecolor='#0A0A0A')\n",
-    "plt.show()"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+    "plt.show()",
+]))
+
+# ── SECTION 8: LANGCHAIN AGENT ───────────────────────────────────────────────
+cells.append(md([
     "# Section 8 — 🤖 LangChain ReAct Agent\n",
     "\n",
     "We build a **LangChain ReAct Agent** that answers natural language questions about the Uber dataset.\n",
@@ -637,15 +551,10 @@
     "**Example queries**:\n",
     "- *\"Which NYC neighborhood has the most Uber pickups?\"*\n",
     "- *\"What is the busiest hour for Uber on Fridays?\"*\n",
-    "- *\"Compare base B02617 vs B02598\"*\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "- *\"Compare base B02617 vs B02598\"*\n",
+]))
+
+cells.append(code([
     "# ── Step 1: Define data-query tools ──────────────────────────────────────\n",
     "# Uncomment after installing: pip install langchain langchain-openai python-dotenv\n",
     "#\n",
@@ -676,15 +585,10 @@
     "#     Tool(name='BaseStats',     func=get_base_stats, description='Returns trip counts per Uber dispatch base'),\n",
     "# ]\n",
     "\n",
-    "print('Section 8 ready. Uncomment LangChain code and add OPENAI_API_KEY to .env to activate.')"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "print('Section 8 ready. Uncomment LangChain code and add OPENAI_API_KEY to .env to activate.')",
+]))
+
+cells.append(code([
     "# ── Step 2: Create and run the ReAct Agent ────────────────────────────────\n",
     "# llm = ChatOpenAI(model='gpt-4o-mini', temperature=0)\n",
     "# prompt = hub.pull('hwchase17/react')\n",
@@ -702,26 +606,19 @@
     "#     result = agent_executor.invoke({'input': q})\n",
     "#     print(f'🤖 {result[\"output\"]}')\n",
     "\n",
-    "print('Agent queries are commented out. Set your API key and uncomment to run.')"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+    "print('Agent queries are commented out. Set your API key and uncomment to run.')",
+]))
+
+# ── SECTION 9: GENAI SUMMARIZER ──────────────────────────────────────────────
+cells.append(md([
     "# Section 9 — 🧠 GenAI Executive Insight Summarizer\n",
     "\n",
     "We use **Google Gemini** (or GPT-4) to automatically generate a professional data analyst executive summary of all our findings.\n",
     "\n",
-    "**Prerequisites**: Set `GOOGLE_API_KEY` in your `.env` file.\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "**Prerequisites**: Set `GOOGLE_API_KEY` in your `.env` file.\n",
+]))
+
+cells.append(code([
     "# ── Compile key stats ─────────────────────────────────────────────────────\n",
     "peak_hour_val = int(df['Hour'].value_counts().idxmax())\n",
     "peak_hour_str = f\"{peak_hour_val % 12 or 12} {'PM' if peak_hour_val >= 12 else 'AM'}\"\n",
@@ -742,15 +639,10 @@
     "LSTM Forecast MAE: {mae:.1f} trips/hour\n",
     "\"\"\"\n",
     "print('Stats compiled for GenAI summarizer:')\n",
-    "print(stats_summary)"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "print(stats_summary)",
+]))
+
+cells.append(code([
     "# ── GenAI Executive Summary via Gemini ───────────────────────────────────\n",
     "# Uncomment after installing: pip install langchain-google-genai\n",
     "#\n",
@@ -777,13 +669,11 @@
     "# print('=== GEMINI EXECUTIVE SUMMARY ===')\n",
     "# print(response.content)\n",
     "\n",
-    "print('Section 9 ready. Add GOOGLE_API_KEY to .env and uncomment to generate AI summary.')"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+    "print('Section 9 ready. Add GOOGLE_API_KEY to .env and uncomment to generate AI summary.')",
+]))
+
+# ── SECTION 10: STREAMLIT DASHBOARD ─────────────────────────────────────────
+cells.append(md([
     "# Section 10 — 🖥️ Streamlit Dashboard\n",
     "\n",
     "The full analysis is packaged into a premium **Uber-style dark Streamlit dashboard** with 5 interactive pages.\n",
@@ -801,15 +691,10 @@
     "2. **🗺️ Zone Analysis** — Interactive choropleth + hour slider + ranked table\n",
     "3. **📊 EDA Dashboard** — Hour/weekday charts, demand heatmap, base donut\n",
     "4. **🤖 AI Analyst** — LangChain-powered chat interface\n",
-    "5. **🔮 Demand Forecast** — LSTM actual vs predicted curves\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
+    "5. **🔮 Demand Forecast** — LSTM actual vs predicted curves\n",
+]))
+
+cells.append(code([
     "# Launch the Streamlit app from this notebook cell\n",
     "import subprocess, sys\n",
     "\n",
@@ -817,13 +702,10 @@
     "print('  streamlit run app.py')\n",
     "print()\n",
     "print('Or click the button below to launch it from this notebook:')\n",
-    "print('  (requires streamlit to be installed: pip install streamlit streamlit-folium plotly)')"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
+    "print('  (requires streamlit to be installed: pip install streamlit streamlit-folium plotly)')",
+]))
+
+cells.append(md([
     "---\n",
     "## 🎯 Project Summary\n",
     "\n",
@@ -836,8 +718,30 @@
     "| Deep Learning | LSTM Keras | Accurate hourly demand forecasting |\n",
     "| AI Agent | LangChain ReAct | NL querying of dataset |\n",
     "| GenAI | Gemini / GPT-4 | Auto-generated executive analyst report |\n",
-    "| Dashboard | Streamlit + Plotly | Premium Uber-style interactive app |\n"
-   ]
-  }
- ]
+    "| Dashboard | Streamlit + Plotly | Premium Uber-style interactive app |\n",
+]))
+
+# ── WRITE NOTEBOOK ───────────────────────────────────────────────────────────
+notebook = {
+    "nbformat": 4,
+    "nbformat_minor": 5,
+    "metadata": {
+        "kernelspec": {
+            "display_name": "Python 3",
+            "language": "python",
+            "name": "python3"
+        },
+        "language_info": {
+            "name": "python",
+            "version": "3.10.0"
+        }
+    },
+    "cells": cells
 }
+
+output_path = "Uber_Trip_Analysis.ipynb"
+with open(output_path, "w", encoding="utf-8") as f:
+    json.dump(notebook, f, indent=1, ensure_ascii=False)
+
+print(f"✅ Notebook written: {output_path}")
+print(f"   Total cells: {len(cells)}")
