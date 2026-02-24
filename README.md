@@ -6,9 +6,9 @@
 
 ## 🖥️ Dashboard Preview
 
-![Uber Dashboard Preview](uber_dashboard_preview.png)
-
-> Black background · Uber green accents · Interactive NYC heatmap · AI analyst chat
+> **[Dashboard Live at localhost:8501]**
+> 
+> *The dashboard features a premium dark theme with black background, Uber green accents, interactive NYC hotspots, and an AI chat interface.*
 
 ---
 
