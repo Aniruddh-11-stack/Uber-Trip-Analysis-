@@ -650,7 +650,11 @@ elif st.session_state.page == "AI Analyst":
         if "zone" in q or "area" in q or "neighborhood" in q:
             ans = f"🏙️ <b>{top_zone}</b> is the #1 pickup zone in NYC with the highest trip concentration. The top 5 zones are:<br>1. {zone_counts.iloc[0]['Neighborhood']} ({zone_counts.iloc[0]['Trips']:,} trips)<br>2. {zone_counts.iloc[1]['Neighborhood']}<br>3. {zone_counts.iloc[2]['Neighborhood']}<br>4. {zone_counts.iloc[3]['Neighborhood']}<br>5. {zone_counts.iloc[4]['Neighborhood']}"
         elif "peak" in q or "hour" in q:
-            ans = f"⏰ The peak Uber pickup hour in NYC is <b>{peak_hour_label}</b>, during the evening rush. The top 3 busiest hours are {', '.join([f'{h%12 or 12}{\"PM\" if h>=12 else \"AM\"}' for h in trips_by_hour.nlargest(3, \"Trips\")[\"Hour\"].tolist()])}."
+            top3_hours = ", ".join(
+                [f"{h % 12 or 12}{'PM' if h >= 12 else 'AM'}"
+                 for h in trips_by_hour.nlargest(3, "Trips")["Hour"].tolist()]
+            )
+            ans = f"⏰ The peak Uber pickup hour in NYC is <b>{peak_hour_label}</b>, during the evening rush. The top 3 busiest hours are {top3_hours}."
         elif "base" in q:
             ans = f"🏢 <b>{busiest_base}</b> is the busiest dispatch base, handling {trips_by_base.iloc[0]['Trips']:,} trips. Top bases: {', '.join(trips_by_base['Base'].head(3).tolist())}."
         elif "total" in q or "how many" in q:
