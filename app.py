@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -457,24 +458,30 @@ if st.session_state.page == "Home":
             trip_k = f"{row['Trips']/1000:.1f}K" if row["Trips"] >= 1000 else str(row["Trips"])
             alpha = 0.40 + 0.60 * (pct / 100)
             bar_color = f"rgba(9,222,111,{alpha:.2f})"
-            rows_html += f"""
-            <div style='margin-bottom:10px;'>
-                <div style='display:flex; justify-content:space-between; margin-bottom:4px;'>
-                    <span style='color:#CCCCCC; font-size:0.78rem; font-weight:500;'>{row['Neighborhood']}</span>
-                    <span style='color:#09DE6F; font-size:0.75rem; font-weight:600;'>{trip_k}</span>
-                </div>
-                <div style='background:#111; border-radius:4px; height:6px; overflow:hidden;'>
-                    <div style='width:{pct:.1f}%; height:100%; background:{bar_color};
-                                border-radius:4px; transition:width 0.6s ease;
-                                box-shadow:0 0 6px rgba(9,222,111,0.5);'></div>
-                </div>
-            </div>"""
+            rows_html += (
+                "<div style='margin-bottom:12px;'>"
+                "<div style='display:flex;justify-content:space-between;margin-bottom:5px;'>"
+                f"<span style='color:#CCCCCC;font-size:0.82rem;font-weight:500;'>{row['Neighborhood']}</span>"
+                f"<span style='color:#09DE6F;font-size:0.78rem;font-weight:700;'>{trip_k}</span>"
+                "</div>"
+                "<div style='background:#1A1A1A;border-radius:4px;height:7px;overflow:hidden;'>"
+                f"<div style='width:{pct:.1f}%;height:100%;background:{bar_color};"
+                "border-radius:4px;"
+                f"box-shadow:0 0 8px rgba(9,222,111,0.6);'></div>"
+                "</div>"
+                "</div>"
+            )
 
-        st.markdown(f"""
-        <div style='background:#070707; border:1px solid #1A1A1A; border-radius:12px;
-                    padding:1rem 1.2rem; height:400px; overflow-y:auto;'>
-            {rows_html}
-        </div>""", unsafe_allow_html=True)
+        html_panel = (
+            "<div style='background:#070707;border:1px solid #1A1A1A;border-radius:12px;"
+            "padding:14px 16px;height:420px;overflow-y:auto;font-family:Inter,sans-serif;'>"
+            "<div style='font-size:0.7rem;font-weight:700;color:#555;letter-spacing:2px;"
+            "text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;"
+            "border-bottom:1px solid #1A1A1A;'>TOP 10 NYC NEIGHBORHOODS</div>"
+            + rows_html +
+            "</div>"
+        )
+        components.html(html_panel, height=440, scrolling=False)
 
     st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
 
